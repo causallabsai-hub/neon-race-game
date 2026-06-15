@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NEON RACE</title>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <!-- ── Start screen ── -->
+    <div id="startscreen">
+      <div class="start-title">NEON RACE</div>
+      <div class="start-sub">SPACE キーでスタート / タップでスタート</div>
+      <div id="start-highscore"></div>
+
+      <div class="color-picker">
+        <div class="color-label">車のカラーを選択</div>
+        <div class="color-swatches">
+          <button class="swatch" data-color="red"     style="background:#ff2200;" title="レッド"></button>
+          <button class="swatch" data-color="cyan"    style="background:#00ffee;" title="シアン"></button>
+          <button class="swatch" data-color="yellow"  style="background:#ffff00;" title="イエロー"></button>
+          <button class="swatch" data-color="white"   style="background:#ffffff;" title="ホワイト"></button>
+        </div>
+      </div>
+
+      <div class="start-controls">
+        <div>← → / A D &nbsp;: 左右移動</div>
+        <div>W / ↑ &nbsp;: 加速 &nbsp;&nbsp;&nbsp; S / ↓ &nbsp;: 減速</div>
+        <div>P &nbsp;: ポーズ &nbsp;&nbsp;&nbsp; R &nbsp;: リスタート</div>
+        <div>⚡ 青いアイテム : 3秒ブースト（ポイント2倍）</div>
+        <div>コインを集めてスコアを稼ごう！</div>
+      </div>
+    </div>
+
+    <!-- ── HUD ── -->
+    <div id="hud">
+      <div id="score">スコア: 0</div>
+      <div id="spd">速度: 24 km/h</div>
+      <div id="boost-hud">⚡ BOOST!</div>
+      <div id="controls">
+        A/← : 左 &nbsp;|&nbsp; D/→ : 右 &nbsp;|&nbsp; W/↑ : 加速 &nbsp;|&nbsp; S/↓ : 減速 &nbsp;|&nbsp; P : ポーズ &nbsp;|&nbsp; R : リスタート
+      </div>
+    </div>
+
+    <!-- ── Mission panel ── -->
+    <div id="mission-panel">
+      <div class="mission-title">MISSION</div>
+      <div id="mission-list"></div>
+    </div>
+
+    <!-- ── Lane HUD ── -->
+    <div id="lane-hud">
+      <div class="lane-hud-label">LANE</div>
+      <div class="lane-boxes">
+        <div class="lane-box" id="lane-0"></div>
+        <div class="lane-box" id="lane-1"></div>
+        <div class="lane-box" id="lane-2"></div>
+      </div>
+    </div>
+
+    <!-- ── Mission notification ── -->
+    <div id="mission-notify"></div>
+
+    <!-- ── Pause overlay ── -->
+    <div id="pause-overlay">
+      <div class="pause-box">
+        <div class="pause-title">PAUSED</div>
+        <p>P キーで再開 &nbsp;|&nbsp; R キーでリスタート</p>
+      </div>
+    </div>
+
+    <!-- ── Game Over ── -->
+    <div id="gameover">
+      <div class="go-box">
+        <div class="go-title">GAME OVER</div>
+        <div id="go-stats"></div>
+        <div id="go-rank"></div>
+        <div id="go-missions"></div>
+        <p class="go-restart">R キーでリスタート</p>
+      </div>
+    </div>
+
+    <!-- ── Mobile controls ── -->
+    <div id="mobile-controls">
+      <button class="mob-btn" id="mob-left">◀<span>左</span></button>
+      <button class="mob-btn" id="mob-brake">▼<span>減速</span></button>
+      <button class="mob-btn" id="mob-accel">▲<span>加速</span></button>
+      <button class="mob-btn" id="mob-right">▶<span>右</span></button>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
