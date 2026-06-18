@@ -715,10 +715,61 @@ const COIN_MAT = new THREE.MeshLambertMaterial({ color: 0xffe566, emissive: new 
 function spawnCoin() {
   if (coins.length >= 10) return;
   const laneIdx = Math.random() < 0.45 ? 1 : Math.floor(Math.random() * LANES.length);
-  const mesh    = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.18, 8, 20), COIN_MAT);
-  mesh.position.set(LANES[laneIdx], 2.0, -160);
-  mesh.rotation.x = Math.PI / 2;
-  scene.add(mesh); coins.push(mesh);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createRadialGradient(48, 36, 8, 64, 64, 58);
+  grad.addColorStop(0, '#fff7a8');
+  grad.addColorStop(0.45, '#ffd84a');
+  grad.addColorStop(1, '#d88a00');
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(64, 64, 54, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = '#ff9f00';
+  ctx.stroke();
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#fff0a0';
+  ctx.beginPath();
+  ctx.arc(64, 64, 34, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff3a0';
+  ctx.font = 'bold 48px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#5a3200';
+  ctx.strokeText('C', 64, 66);
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#fff1a8';
+  ctx.strokeText('C', 64, 66);
+
+  ctx.fillStyle = '#d49a00';
+  ctx.fillText('C', 64, 66);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false
+  });
+
+  const coin = new THREE.Sprite(material);
+  coin.position.set(LANES[laneIdx], 2.6, -160);
+  coin.scale.set(1.8, 2.2, 1);
+
+  scene.add(coin);
+  coins.push(coin);
 }
 
 // ── HUD ───────────────────────────────────────────────────
