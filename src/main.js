@@ -27,6 +27,14 @@ const PLAYER_CAR_LIGHT_INTENSITY = 2.8;
 
 // ── Lighting ──────────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0x223355, NIGHT_AMBIENT_INTENSITY));
+
+const carGlowLight = new THREE.PointLight(0xffffff, 4.2, 38, 1.4);
+carGlowLight.position.set(0, 4.8, 5.2);
+scene.add(carGlowLight);
+
+const carNeonGlowLight = new THREE.PointLight(0x66ffff, 3.2, 28, 1.6);
+carNeonGlowLight.position.set(0, 2.2, 3.2);
+scene.add(carNeonGlowLight);
 const moonLight = new THREE.DirectionalLight(0xaabbee, NIGHT_MOONLIGHT_INTENSITY);
 moonLight.position.set(-5, 15, 8);
 moonLight.castShadow = true;
@@ -423,6 +431,58 @@ const BOOST_TRAIL_MAT = new THREE.MeshLambertMaterial({ color: 0x44ccff, emissiv
 const PART_GEO        = new THREE.BoxGeometry(0.22, 0.22, 0.22);
 const particles       = [];
 
+function createSparkleTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.25, 'rgba(255,245,160,0.95)');
+  grad.addColorStop(0.55, 'rgba(255,200,40,0.45)');
+  grad.addColorStop(1, 'rgba(255,200,40,0)');
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(32, 32, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+  ctx.moveTo(32, 3);
+  ctx.lineTo(32, 61);
+  ctx.moveTo(3, 32);
+  ctx.lineTo(61, 32);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(12, 12);
+  ctx.lineTo(52, 52);
+  ctx.moveTo(52, 12);
+  ctx.lineTo(12, 52);
+  ctx.stroke();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const COIN_SPARKLE_TEXTURE = createSparkleTexture();
+
+const COIN_SPARKLE_MAT = new THREE.SpriteMaterial({
+  map: COIN_SPARKLE_TEXTURE,
+  transparent: true,
+  depthWrite: false,
+  depthTest: false,
+  opacity: 1,
+  blending: THREE.AdditiveBlending
+});
+
+
 function spawnParticles(x, y, z) {
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.4;
@@ -430,6 +490,33 @@ function spawnParticles(x, y, z) {
     const mesh  = new THREE.Mesh(PART_GEO, COIN_PART_MAT);
     mesh.position.set(x, y, z); scene.add(mesh);
     particles.push({ mesh, vx: Math.cos(angle) * speed, vy: 2.5 + Math.random() * 3, life: 1.0 });
+  }
+}
+
+
+function spawnCoinSparkles(x, y, z) {
+  for (let i = 0; i < 72; i++) {
+    const angle = (i / 72) * Math.PI * 2 + Math.random() * 0.7;
+    const speed = 2.6 + Math.random() * 6.2;
+
+    const mesh = new THREE.Sprite(COIN_SPARKLE_MAT);
+    mesh.position.set(
+      x + (Math.random() - 0.5) * 0.55,
+      y + (Math.random() - 0.5) * 0.55,
+      z + (Math.random() - 0.5) * 0.55
+    );
+
+    const size = 0.38 + Math.random() * 0.75;
+    mesh.scale.set(size, size, size);
+
+    scene.add(mesh);
+
+    particles.push({
+      mesh,
+      vx: Math.cos(angle) * speed,
+      vy: 3.6 + Math.random() * 5.8,
+      life: 0.95 + Math.random() * 0.45
+    });
   }
 }
 
@@ -758,15 +845,30 @@ function spawnCoin() {
   ctx.fillText('C', 64, 66);
 
   const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const faceMaterial = new THREE.MeshBasicMaterial({
     map: texture,
-    transparent: true,
-    depthWrite: false
+    transparent: true
   });
 
-  const coin = new THREE.Sprite(material);
+  const edgeMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffb000,
+    metalness: 0.75,
+    roughness: 0.25,
+    emissive: new THREE.Color(0xff9900),
+    emissiveIntensity: 0.45
+  });
+
+  const coin = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.82, 0.82, 0.16, 64),
+    [edgeMaterial, faceMaterial, faceMaterial]
+  );
+
+  coin.rotation.x = Math.PI / 2;
+  coin.rotation.y = 0.58;
   coin.position.set(LANES[laneIdx], 2.6, -160);
-  coin.scale.set(1.8, 2.2, 1);
+  coin.scale.set(1.35, 1.35, 1.35);
 
   scene.add(coin);
   coins.push(coin);
@@ -1072,7 +1174,7 @@ function animate() {
     const o = obstacles[i];
     o.position.z += scroll;
     o.rotation.y += 1.2 * dt;
-    if (Math.abs(o.position.x - carX) < 1.0 && Math.abs(o.position.z - 3) < 1.6) {
+    if (Math.abs(o.position.x - carX) < 1.6 && Math.abs(o.position.z - 3) < 2.2) {
       playCrashSound(); showGameOver(); return;
     }
     if (o.position.z > 12) {
