@@ -433,44 +433,53 @@ const particles       = [];
 
 function createSparkleTexture() {
   const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
+  canvas.width = 128;
+  canvas.height = 128;
 
   const ctx = canvas.getContext('2d');
+  const cx = 64;
+  const cy = 64;
 
-  const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.25, 'rgba(255,245,160,0.95)');
-  grad.addColorStop(0.55, 'rgba(255,200,40,0.45)');
-  grad.addColorStop(1, 'rgba(255,200,40,0)');
+  ctx.clearRect(0, 0, 128, 128);
 
-  ctx.fillStyle = grad;
+  // tiny soft center
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 34);
+  glow.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+  glow.addColorStop(0.18, 'rgba(255,245,150,0.75)');
+  glow.addColorStop(0.42, 'rgba(255,220,70,0.18)');
+  glow.addColorStop(1.0, 'rgba(255,220,70,0.0)');
+
+  ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(32, 32, 30, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 34, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-  ctx.lineWidth = 3;
-
+  // sharp sparkle cross
+  ctx.strokeStyle = 'rgba(255,255,230,0.95)';
+  ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.moveTo(32, 3);
-  ctx.lineTo(32, 61);
-  ctx.moveTo(3, 32);
-  ctx.lineTo(61, 32);
+  ctx.moveTo(cx - 30, cy);
+  ctx.lineTo(cx + 30, cy);
+  ctx.moveTo(cx, cy - 30);
+  ctx.lineTo(cx, cy + 30);
   ctx.stroke();
 
+  // small diagonal glints
+  ctx.strokeStyle = 'rgba(255,240,160,0.55)';
+  ctx.lineWidth = 0.9;
   ctx.beginPath();
-  ctx.moveTo(12, 12);
-  ctx.lineTo(52, 52);
-  ctx.moveTo(52, 12);
-  ctx.lineTo(12, 52);
+  ctx.moveTo(cx - 14, cy - 14);
+  ctx.lineTo(cx + 14, cy + 14);
+  ctx.moveTo(cx + 14, cy - 14);
+  ctx.lineTo(cx - 14, cy + 14);
   ctx.stroke();
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
   return texture;
 }
-
 const COIN_SPARKLE_TEXTURE = createSparkleTexture();
 
 const COIN_SPARKLE_MAT = new THREE.SpriteMaterial({
@@ -484,15 +493,108 @@ const COIN_SPARKLE_MAT = new THREE.SpriteMaterial({
 
 
 function spawnParticles(x, y, z) {
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.4;
-    const speed = 2.5 + Math.random() * 2.5;
-    const mesh  = new THREE.Mesh(PART_GEO, COIN_PART_MAT);
-    mesh.position.set(x, y, z); scene.add(mesh);
-    particles.push({ mesh, vx: Math.cos(angle) * speed, vy: 2.5 + Math.random() * 3, life: 1.0 });
+  for (let i = 0; i < 34; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dirX = Math.cos(angle);
+    const dirZ = Math.sin(angle);
+
+    const speed = 2.0 + Math.random() * 2.1;
+    const starSize = 0.22 + Math.random() * 0.18;
+
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-starSize, 0, 0),
+      new THREE.Vector3( starSize, 0, 0),
+
+      new THREE.Vector3(0, -starSize, 0),
+      new THREE.Vector3(0,  starSize, 0),
+
+      new THREE.Vector3(-starSize * 0.55, -starSize * 0.55, 0),
+      new THREE.Vector3( starSize * 0.55,  starSize * 0.55, 0),
+
+      new THREE.Vector3( starSize * 0.55, -starSize * 0.55, 0),
+      new THREE.Vector3(-starSize * 0.55,  starSize * 0.55, 0)
+    ]);
+
+    const mat = new THREE.LineBasicMaterial({
+      color: Math.random() < 0.65 ? 0xffffff : 0xfff1a0,
+      transparent: true,
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const mesh = new THREE.LineSegments(geo, mat);
+
+    const startOut = 0.15 + Math.random() * 0.45;
+    mesh.position.set(
+      x + dirX * startOut,
+      y + 0.15 + Math.random() * 0.45,
+      z + dirZ * startOut
+    );
+
+    mesh.rotation.z = Math.random() * Math.PI;
+    scene.add(mesh);
+
+    particles.push({
+      mesh,
+      vx: dirX * speed,
+      vy: 0.75 + Math.random() * 0.95,
+      vz: dirZ * speed,
+      vr: -5 + Math.random() * 10,
+      life: 0.56 + Math.random() * 0.26,
+      maxLife: 0.82,
+      size: 1
+    });
+  }
+
+  // Tiny twinkle stars
+  for (let i = 0; i < 12; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dirX = Math.cos(angle);
+    const dirZ = Math.sin(angle);
+
+    const starSize = 0.07 + Math.random() * 0.06;
+    const speed = 1.1 + Math.random() * 1.4;
+
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-starSize, 0, 0),
+      new THREE.Vector3(starSize, 0, 0),
+      new THREE.Vector3(0, -starSize, 0),
+      new THREE.Vector3(0, starSize, 0)
+    ]);
+
+    const mat = new THREE.LineBasicMaterial({
+      color: Math.random() < 0.7 ? 0xffffff : 0xfff1a0,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const mesh = new THREE.LineSegments(geo, mat);
+
+    const startOut = 0.35 + Math.random() * 0.9;
+    mesh.position.set(
+      x + dirX * startOut,
+      y + 0.2 + Math.random() * 0.75,
+      z + dirZ * startOut
+    );
+
+    mesh.rotation.z = Math.random() * Math.PI;
+    scene.add(mesh);
+
+    particles.push({
+      mesh,
+      vx: dirX * speed,
+      vy: 0.6 + Math.random() * 0.9,
+      vz: dirZ * speed,
+      vr: -7 + Math.random() * 14,
+      life: 0.45 + Math.random() * 0.22,
+      maxLife: 0.67,
+      size: 1
+    });
   }
 }
-
 
 function spawnCoinSparkles(x, y, z) {
   for (let i = 0; i < 72; i++) {
@@ -530,13 +632,36 @@ function spawnBoostTrail(x, y, z) {
 function updateParticles(dt, scroll) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
+
     p.life -= dt * 3.5;
-    if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); continue; }
+
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      if (p.mesh.geometry) p.mesh.geometry.dispose();
+      if (p.mesh.material) p.mesh.material.dispose();
+      particles.splice(i, 1);
+      continue;
+    }
+
     p.mesh.position.x += p.vx * dt;
     p.mesh.position.y += p.vy * dt;
-    p.mesh.position.z += scroll;
-    p.vy -= 12 * dt;
-    p.mesh.scale.setScalar(p.life);
+    p.mesh.position.z += (p.vz || 0) * dt + scroll;
+
+    p.vy -= 3.2 * dt;
+
+    if (p.vr) p.mesh.rotation.z += p.vr * dt;
+
+    const fade = Math.max(p.life / (p.maxLife || 0.7), 0);
+
+    if (p.mesh.material && p.mesh.material.opacity !== undefined) {
+      p.mesh.material.opacity = fade;
+    }
+
+    if (p.size) {
+      p.mesh.scale.setScalar(fade);
+    } else {
+      p.mesh.scale.setScalar(p.life);
+    }
   }
 }
 
@@ -719,7 +844,7 @@ window.addEventListener('keydown', e => {
   if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault();
   keys.add(k);
   if (k === ' ' && state === START)                    startGame();
-  if (k === 'r' && (state === GAMEOVER || isPaused))   restart();
+  if ((k === 'r' && e.shiftKey) || (k === 'r' && (state === GAMEOVER || isPaused))) restart();
   if (k === 'p' && state === PLAYING)                  togglePause();
 });
 window.addEventListener('keyup', e => keys.delete(normalizeKey(e.key, e.code)));
