@@ -596,31 +596,7 @@ function spawnParticles(x, y, z) {
   }
 }
 
-function spawnCoinSparkles(x, y, z) {
-  for (let i = 0; i < 72; i++) {
-    const angle = (i / 72) * Math.PI * 2 + Math.random() * 0.7;
-    const speed = 2.6 + Math.random() * 6.2;
 
-    const mesh = new THREE.Sprite(COIN_SPARKLE_MAT);
-    mesh.position.set(
-      x + (Math.random() - 0.5) * 0.55,
-      y + (Math.random() - 0.5) * 0.55,
-      z + (Math.random() - 0.5) * 0.55
-    );
-
-    const size = 0.38 + Math.random() * 0.75;
-    mesh.scale.set(size, size, size);
-
-    scene.add(mesh);
-
-    particles.push({
-      mesh,
-      vx: Math.cos(angle) * speed,
-      vy: 3.6 + Math.random() * 5.8,
-      life: 0.95 + Math.random() * 0.45
-    });
-  }
-}
 
 function spawnBoostTrail(x, y, z) {
   const mesh = new THREE.Mesh(PART_GEO, BOOST_TRAIL_MAT);
